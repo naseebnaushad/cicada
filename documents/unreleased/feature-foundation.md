@@ -24,6 +24,11 @@ first of five experiments that confirm the design before real code is written.
 - Spike S3 (`spikes/s3-manifest`): creates a least-privilege GitHub App from a CLI through
   the App manifest flow.
 
+- Spike S1/S2 (`spikes/s1-scaleset`): registers a runner scale set with that App,
+  long-polls for jobs and runs each in a throwaway Docker container. First dependencies:
+  `github.com/actions/scaleset` v0.5.0 (MIT), `github.com/golang-jwt/jwt/v5` v5.3.1 (MIT)
+  and, indirectly, `github.com/google/uuid` v1.6.0 (BSD-3-Clause).
+
 ## How it works
 
 `cmd/cicada` is a thin entry point; `run` takes its arguments and output streams so it can
@@ -34,6 +39,14 @@ to GitHub, checks the `state` value on the callback, exchanges the one-time code
 App credentials and stores them owner-only in the user config folder. It answers only
 requests addressed to its own loopback address, sets a strict content security policy,
 never prints the private key and shows the browser only generic errors.
+
+The scale set spike signs a short-lived App token, looks up the App's installation for the
+target repo or organisation, and hands the credentials to GitHub's scale set client. Its
+scaler claims offered jobs, starts one runner per assigned job up to a limit, and frees
+the slot when the job completes or the runner exits. The single-use runner configuration
+is passed to Docker through the environment, never as a command-line argument. Docker is
+checked before anything is created on GitHub, and the scale set, session and containers
+are cleaned up on exit.
 
 ## Tests added and results
 
@@ -56,7 +69,17 @@ Spike S3 was then run against GitHub for a personal account on 2026-11-21: the l
 callback and the repo-scope permission set were accepted and the App was created (see
 `documents/Spikes.md`).
 
-**Not verified:** the spike for an organisation owner and on a headless machine; the CI
+Scale set spike tests (fakes, no network): one runner per assigned job capped at the
+limit, redelivered messages start nothing twice, every offered job is acquired, completed
+jobs and runner exits free capacity, failed starts are not tracked, shutdown removes all
+runners, unsafe URLs, labels and container names are refused, the App token verifies and
+stays under GitHub's 10-minute limit, a key file readable by other users is refused, API
+error bodies are not echoed. Re-run on 2026-11-21: tests, `staticcheck`, `govulncheck` and
+cross-builds all pass with the new dependencies.
+
+**Not verified:** the scale set spike against GitHub (needs a sandbox repo with the App
+installed, and Docker running; on this machine it stops at "docker is not running" as
+designed); the S3 spike for an organisation owner and on a headless machine; the CI
 workflow (no remote connected, never run); tests on Linux and Windows (only cross-built).
 
 ## Bugs fixed
@@ -77,6 +100,5 @@ Nothing usable yet. The binary prints its version only.
 
 ## Suggestions
 
-- Run spike S3 on a test account, then write the S1/S2 scale set spike with its
-  credentials.
+- Run the scale set spike on a sandbox repo to answer S1 and S2.
 - Pin the CI actions by commit SHA now that the repository is public.

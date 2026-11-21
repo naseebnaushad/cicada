@@ -19,7 +19,7 @@ code to audit. This file records the baseline so later sessions know where thing
 | Low | CI | Actions in `ci.yml` are pinned by version tag, not commit SHA. | Pin by SHA before the first public release. |
 | Low | CI | The workflow has never run; the repo has no remote connected. | Connect the remote and open the first PR. |
 | Info | Tests | Unit tests cover all code present (CLI, version stamp, S3 spike). | Keep the bar as code arrives. |
-| Info | Dependencies | Standard library only. `govulncheck`: no vulnerabilities. | None. |
+| Info | Dependencies | `actions/scaleset` (MIT), `golang-jwt/jwt` (MIT), `google/uuid` (BSD-3-Clause), all pinned. `govulncheck`: no vulnerabilities. | None. |
 | Info | Secrets | None in the tree. `.gitignore` covers `.env*`, keys and certificates. | None. |
 
 ## Architecture verdict

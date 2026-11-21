@@ -6,8 +6,8 @@ Only live results count as verified.
 
 | ID | Question | Desk | Live |
 |---|---|---|---|
-| S1 | GitHub App for repo-level scale sets on a personal account | Partly | Not run |
-| S2 | Job spreading across hosts that share labels | No answer found | Not run |
+| S1 | GitHub App for repo-level scale sets on a personal account | Partly | **Ready to run** |
+| S2 | Job spreading across hosts that share labels | No answer found | **Ready to run** (same program) |
 | S3 | App manifest flow from a CLI with a loopback callback | Done | **Works** for a personal account (2026-11-21); organisation owner not run |
 | S4 | macOS VMs with `vz` | Not started | Not run |
 | S5 | Windows process isolation and cleanup | Not started | Not run (needs a Windows machine) |
@@ -71,10 +71,65 @@ which a loopback callback cannot work as is.
 
 ## S1 and S2: scale sets
 
-Need the App from S3 installed on a test account and a test org with at least one
-throwaway repo. The spike program will be written once S3 has run, because it uses those
-credentials. S2 also needs two machines, or two processes with different scale set names
-on one machine.
+**Spike program:** `spikes/s1-scaleset`. Unit-tested with fakes; **not yet run against
+GitHub.** It uses the App credentials stored by S3, finds the App's installation,
+registers (or reuses) a scale set, long-polls for jobs, starts one throwaway Docker
+container per assigned job and deletes the scale set on exit.
+
+**Before running**
+
+1. Create an empty private repo to experiment in, for example `cicada-sandbox`.
+2. Install the App on that repo only ("Only select repositories"):
+   `https://github.com/apps/<app-slug>/installations/new`.
+3. Start Docker.
+4. Add this workflow to the sandbox repo as `.github/workflows/spike.yml`:
+
+```yaml
+name: spike
+on: workflow_dispatch
+jobs:
+  hello:
+    runs-on: cicada-spike
+    strategy:
+      matrix:
+        n: [1, 2, 3, 4]
+    steps:
+      - run: echo "job ${{ matrix.n }} on $(hostname)" && sleep 20
+```
+
+**S1: one scale set on a personal repo**
+
+```bash
+go run ./spikes/s1-scaleset -url https://github.com/OWNER/cicada-sandbox
+```
+
+Then start the workflow from the repo's Actions tab. Pass: the scale set is created with
+only the App's `administration: write` permission, the four jobs run two at a time
+(`-max 2`) in containers that disappear afterwards, and Ctrl-C deletes the scale set.
+
+**S2: two scale sets sharing a label**
+
+Run two copies in two terminals (or on two machines), then start the workflow:
+
+```bash
+go run ./spikes/s1-scaleset -url https://github.com/OWNER/cicada-sandbox -name spike-a -max 1
+```
+
+```bash
+go run ./spikes/s1-scaleset -url https://github.com/OWNER/cicada-sandbox -name spike-b -max 1
+```
+
+Both register the label `cicada-spike`. The logs show which scale set each job is
+assigned to. Questions to answer: are jobs spread across both; when one is full, does a
+waiting job move to the other or stay stuck behind it; what happens to queued jobs when
+one copy stops.
+
+`-backend none` registers and listens without starting runners, to watch assignment only.
+Jobs assigned that way stay queued until the run is cancelled on GitHub.
+
+**Desk note:** the client's README says several labels per scale set work on github.com;
+on GitHub Enterprise Server they need version 3.18+ and a feature flag, otherwise only the
+scale set name is kept as a label. Scenario ON-07 must account for that.
 
 ## S4 and S5
 
