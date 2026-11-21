@@ -52,7 +52,11 @@ validation, foreign `Host` refused, bad or missing `state` and `code` refused, r
 callback refused, credentials stored with owner-only permissions, key never sent to the
 browser, API failure details hidden from the browser.
 
-**Not verified:** the spike against real GitHub (needs the owner's browser step); the CI
+Spike S3 was then run against GitHub for a personal account on 2026-11-21: the loopback
+callback and the repo-scope permission set were accepted and the App was created (see
+`documents/Spikes.md`).
+
+**Not verified:** the spike for an organisation owner and on a headless machine; the CI
 workflow (no remote connected, never run); tests on Linux and Windows (only cross-built).
 
 ## Bugs fixed
@@ -67,7 +71,7 @@ Nothing usable yet. The binary prints its version only.
 
 - No `VERSION` file: it is created through `/promote`. Builds are labelled `0.0.0-dev`
   until then.
-- No licence file: the owner has not chosen one yet.
+- Licence: Apache-2.0, `LICENSE` added from the official text.
 - CI tool versions are pinned; actions are pinned by tag, to be pinned by SHA before the
   first public release.
 
@@ -75,4 +79,4 @@ Nothing usable yet. The binary prints its version only.
 
 - Run spike S3 on a test account, then write the S1/S2 scale set spike with its
   credentials.
-- Choose the licence before the repository is made public.
+- Pin the CI actions by commit SHA now that the repository is public.

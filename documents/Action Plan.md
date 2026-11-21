@@ -40,7 +40,7 @@ Kubernetes (GitHub's ARC already covers it).
 | D3 | Built on GitHub runner scale sets through `actions/scaleset` (MIT, public preview). | Proposed |
 | D4 | Authentication is a GitHub App created by `cicada up`; PAT is a fallback. | Proposed |
 | D5 | Each host is autonomous. No central server. | Proposed, depends on spike S2 |
-| D6 | Licence: Apache-2.0. | **Open, owner decides** |
+| D6 | Licence: Apache-2.0. | Decided 2026-11-21 |
 | D7 | Ownership: personal project or ThoughtBox project. | **Open, owner decides** |
 
 ## 3. Architecture
@@ -327,7 +327,7 @@ warm   = 0
 
 ## 12. Open questions for the owner
 
-1. Licence (D6) and ownership (D7).
+1. Ownership (D7).
 2. Name and email for the personal Gita profile, so the remote can be connected.
 3. Which of our repos should be the first real users after Milestone 2?
 4. Do we need Intel Macs, or Apple Silicon only?

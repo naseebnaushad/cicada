@@ -8,7 +8,7 @@ Only live results count as verified.
 |---|---|---|---|
 | S1 | GitHub App for repo-level scale sets on a personal account | Partly | Not run |
 | S2 | Job spreading across hosts that share labels | No answer found | Not run |
-| S3 | App manifest flow from a CLI with a loopback callback | Done | **Ready to run** |
+| S3 | App manifest flow from a CLI with a loopback callback | Done | **Works** for a personal account (2026-11-21); organisation owner not run |
 | S4 | macOS VMs with `vz` | Not started | Not run |
 | S5 | Windows process isolation and cleanup | Not started | Not run (needs a Windows machine) |
 
@@ -51,9 +51,23 @@ It prints a local URL, you press one button, GitHub asks you to confirm the App,
 credentials are saved in your user config folder under `cicada-spike/` (owner-only, never
 printed, outside the repo). It prints the link to delete the App afterwards.
 
-**To record after the live run:** did the loopback redirect work; did GitHub accept the
-permission set for a personal and an org owner; anything the confirmation screen shows
-that would surprise a user.
+**Live result, personal account (2026-11-21, macOS)**
+
+- GitHub accepted `http://127.0.0.1:<port>/callback` as the `redirect_url` and redirected
+  back to it with the code. **A loopback callback works.**
+- GitHub accepted the manifest with no webhook and the repo-scope permission set
+  (`administration: write`, `metadata: read`) for a user-owned App.
+- The code exchange returned the App id, slug and private key; both files were stored with
+  mode 0600 in a 0700 folder; the key was not printed.
+- One button on the local page, one confirmation on GitHub. The App is created but not
+  yet installed on any repo; installing is a second step.
+
+**Conclusion:** scenario ON-01/ON-02 onboarding can use the manifest flow as planned. No
+fallback needed for personal accounts.
+
+**Still to run:** the same flow with `-org` on a test organisation (org-scope
+permissions), and the headless case (ON-05) where the browser is on another machine, in
+which a loopback callback cannot work as is.
 
 ## S1 and S2: scale sets
 

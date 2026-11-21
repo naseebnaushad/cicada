@@ -84,4 +84,4 @@ See [documents/README.md](documents/README.md).
 
 ## Licence
 
-Not chosen yet. Until a licence file is added, all rights are reserved.
+Apache License 2.0. See [LICENSE](LICENSE).
