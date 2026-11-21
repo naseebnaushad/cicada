@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)", "Edit(./.env)",
+      "Read(./.env.local)", "Edit(./.env.local)",
+      "Read(./.env.development)", "Edit(./.env.development)",
+      "Read(./.env.test)", "Edit(./.env.test)",
+      "Read(./.env.staging)", "Edit(./.env.staging)",
+      "Read(./.env.production)", "Edit(./.env.production)",
+      "Read(./**/*.pem)", "Edit(./**/*.pem)",
+      "Read(./**/*.key)", "Edit(./**/*.key)",
+      "Read(./**/*.pfx)", "Edit(./**/*.pfx)",
+      "Read(./**/*.p12)", "Edit(./**/*.p12)",
+      "Read(./secrets/**)", "Edit(./secrets/**)"
+    ]
+  }
+}

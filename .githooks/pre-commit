@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Company versioning rules (claude-standards, CLAUDE.md §8), for commits made by hand.
+# Installed by Claude's session start: git config core.hooksPath .githooks
+set -u
+# Admin mode: the Claude guard checks the admin key and asks the admin to confirm, so the
+# hook steps aside when the key is set. A person can always skip hooks with --no-verify.
+[ -n "${CLAUDE_STANDARDS_ADMIN:-}" ] && exit 0
+br=$(git symbolic-ref --short -q HEAD 2>/dev/null || true)
+[ -n "$br" ] || exit 0
+case "$br" in
+  main|master|develop|build/*)
+    echo "pre-commit: don't commit on '$br'. Create a feature/ or fix/ branch and open a pull request." >&2
+    exit 1 ;;
+  promote/*|hotfix/*) exit 0 ;;
+esac
+bad=$(git diff --cached --name-only --diff-filter=ACDMR |
+  grep -E '^VERSION$|^documents/CHANGELOG\.md$|^documents/v[0-9]+\.[0-9]+\.[0-9]+[^/]*/(beta|release)/' || true)
+if [ -n "$bad" ]; then
+  echo "pre-commit: these files are written only by /promote (on a promote/ or hotfix/ branch):" >&2
+  printf '  %s\n' $bad >&2
+  echo "Unstage them (git restore --staged <file>) and describe the change in documents/unreleased/${br//\//-}.md." >&2
+  exit 1
+fi
+exit 0

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Company versioning rules (claude-standards, CLAUDE.md §8), for pushes made by hand.
+# Blocks pushes to main/develop/build/* (GitHub Free has no branch protection) and feature/fix/
+# hotfix branches without their change note in documents/unreleased/.
+set -u
+# Admin mode: the Claude guard checks the admin key and asks the admin to confirm, so the
+# hook steps aside when the key is set. A person can always skip hooks with --no-verify.
+[ -n "${CLAUDE_STANDARDS_ADMIN:-}" ] && exit 0
+zero=0000000000000000000000000000000000000000
+fail=0
+while read -r lref lsha rref rsha; do
+  [ "$lsha" = "$zero" ] && continue          # deleting a remote branch
+  case "$rref" in
+    refs/heads/main|refs/heads/master|refs/heads/develop|refs/heads/build/*)
+      echo "pre-push: don't push to ${rref#refs/heads/}. Push your branch and open a pull request; a person merges it." >&2
+      fail=1; continue ;;
+  esac
+  br=${lref#refs/heads/}
+  case "$br" in
+    feature/*|fix/*|hotfix/*)
+      git cat-file -e "$lsha:documents" 2>/dev/null || continue   # repo without the documents system
+      note="documents/unreleased/${br//\//-}.md"
+      if ! git cat-file -e "$lsha:$note" 2>/dev/null; then
+        echo "pre-push: '$br' has no change note ($note). Ask Claude for /change-note, or write it from documents/unreleased/README.md, commit it and push again." >&2
+        fail=1
+      fi ;;
+  esac
+done
+exit $fail
