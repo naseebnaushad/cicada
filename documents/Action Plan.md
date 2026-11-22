@@ -39,7 +39,7 @@ Kubernetes (GitHub's ARC already covers it).
 | D2 | Written in Go. | Decided |
 | D3 | Built on GitHub runner scale sets through `actions/scaleset` (MIT, public preview). | Proposed |
 | D4 | Authentication is a GitHub App created by `cicada up`; PAT is a fallback. | Proposed |
-| D5 | Each host is autonomous. No central server. | Proposed, depends on spike S2 |
+| D5 | Each host is autonomous. No central server. | Supported by spike S2 (2026-11-21); confirm on two real hosts in Milestone 5 |
 | D6 | Licence: Apache-2.0. | Decided 2026-11-21 |
 | D7 | Ownership: personal project or ThoughtBox project. | **Open, owner decides** |
 
@@ -180,7 +180,7 @@ that delivers it.
 
 | ID | Scenario | Expected behaviour | M |
 |---|---|---|---|
-| FR-01 | Daemon crash or kill | The OS service restarts it. On start it lists every resource it labelled, keeps those with a live job, destroys the rest. | 1 |
+| FR-01 | Daemon crash or kill | The OS service restarts it. On start it lists every resource it labelled, keeps those with a live job, destroys the rest. It re-attaches to its existing scale set. Spike S2 showed GitHub holds work routed to a dead scale set for about 5 minutes, so restart must be much faster than that. | 1 |
 | FR-02 | Host reboot | Service starts at boot, same reconcile. Jobs that were running are reported failed by GitHub and can be re-run. | 1 |
 | FR-03 | Network loss | Back-off with jitter, session re-created on return. Running jobs are left alone. | 1 |
 | FR-04 | GitHub API errors or rate limit | Back-off honouring `Retry-After`; `status` shows "degraded" with the reason. | 1 |

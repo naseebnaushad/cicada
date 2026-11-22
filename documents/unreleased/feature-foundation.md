@@ -77,9 +77,14 @@ stays under GitHub's 10-minute limit, a key file readable by other users is refu
 error bodies are not echoed. Re-run on 2026-11-21: tests, `staticcheck`, `govulncheck` and
 cross-builds all pass with the new dependencies.
 
-**Not verified:** the scale set spike against GitHub (needs a sandbox repo with the App
-installed, and Docker running; on this machine it stops at "docker is not running" as
-designed); the S3 spike for an organisation owner and on a headless machine; the CI
+The scale set spike was then run against GitHub on 2026-11-21 (private sandbox repo on a
+personal account, Docker Desktop): S1 passed (4 of 4 jobs, two at a time, nothing left
+behind), S2 passed (two scale sets sharing a label split 4 jobs 2 and 2), and with one
+copy hard-killed the last job moved to the survivor after about 5 minutes. Details and
+limits are in `documents/Spikes.md`.
+
+**Not verified:** the scale set spike at organisation level, on two real hosts, or with a
+host dying mid-job; the S3 spike for an organisation owner and on a headless machine; the CI
 workflow (no remote connected, never run); tests on Linux and Windows (only cross-built).
 
 ## Bugs fixed
@@ -100,5 +105,6 @@ Nothing usable yet. The binary prints its version only.
 
 ## Suggestions
 
-- Run the scale set spike on a sandbox repo to answer S1 and S2.
+- Repeat S2 on two real hosts and with unequal capacity before building fleet features.
+- Give runners a short grace period to exit by themselves before force-removing them.
 - Pin the CI actions by commit SHA now that the repository is public.

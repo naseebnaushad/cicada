@@ -6,8 +6,8 @@ Only live results count as verified.
 
 | ID | Question | Desk | Live |
 |---|---|---|---|
-| S1 | GitHub App for repo-level scale sets on a personal account | Partly | **Ready to run** |
-| S2 | Job spreading across hosts that share labels | No answer found | **Ready to run** (same program) |
+| S1 | GitHub App for repo-level scale sets on a personal account | Partly | **Works** (2026-11-21); organisation level not run |
+| S2 | Job spreading across hosts that share labels | No answer found | **Works** in a two-scale-set test on one machine (2026-11-21); see limits below |
 | S3 | App manifest flow from a CLI with a loopback callback | Done | **Works** for a personal account (2026-11-21); organisation owner not run |
 | S4 | macOS VMs with `vz` | Not started | Not run |
 | S5 | Windows process isolation and cleanup | Not started | Not run (needs a Windows machine) |
@@ -71,8 +71,65 @@ which a loopback callback cannot work as is.
 
 ## S1 and S2: scale sets
 
-**Spike program:** `spikes/s1-scaleset`. Unit-tested with fakes; **not yet run against
-GitHub.** It uses the App credentials stored by S3, finds the App's installation,
+### Live results (2026-11-21, macOS arm64, Docker Desktop 29.9.3, private sandbox repo on a personal account)
+
+Each run queued four 20-second jobs with `runs-on: cicada-spike`.
+
+**S1: one scale set, `-max 2`**
+
+| Observation | Result |
+|---|---|
+| Repo-level scale set created with a user-owned App holding only `administration: write` and `metadata: read` | Yes |
+| Jobs | 4 of 4 succeeded, two at a time |
+| GitHub respects the reported capacity | Yes: the third job was assigned only after a slot freed |
+| Assignment to job start (image already pulled) | About 7 seconds |
+| Containers left after the run | None |
+| Ctrl-C | Scale set deleted |
+
+**S2: two scale sets (`spike-a`, `spike-b`), same label, `-max 1` each**
+
+| Observation | Result |
+|---|---|
+| Job split | 2 and 2 |
+| Each scale set got its next job only when it had a free slot | Yes |
+| Jobs | 4 of 4 succeeded, in two rounds |
+
+**S2 crash case: `spike-b` hard-killed (scale set left registered, nobody listening), then four jobs queued**
+
+| Observation | Result |
+|---|---|
+| Jobs taken by the surviving scale set straight away | 3, one after another |
+| The fourth job | Waited about 5 minutes, then GitHub assigned it to the surviving scale set and it succeeded |
+| Restarting the killed copy | Found the existing scale set, reused it, opened a new session and deleted it cleanly on exit |
+
+**Conclusions**
+
+- **S1 passes.** A GitHub App works for repo-level scale sets on a personal account, so
+  scenario ON-02 needs no PAT fallback.
+- **S2 supports decision D5** (each host autonomous, no central server): GitHub spreads
+  jobs across scale sets that share a label and respects each one's capacity.
+- **A crashed host costs time, not jobs.** Work that GitHub had routed to the dead scale
+  set was held for about 5 minutes before moving. Scenario FR-01 should therefore aim to
+  restart and re-attach well inside that window, and a host that is being removed must
+  delete its scale set.
+
+**Other things seen**
+
+- Jobs arrived as "assigned" messages; no "available" message was seen, so the acquire
+  step was never exercised live.
+- "Job started" messages arrive late, bundled with the next message (often the
+  completion). They cannot be used for live status.
+- The spike force-removes the container when the completion message arrives, which races
+  with the runner's own exit (exit status 137 in the log). The product should give the
+  runner a short grace period to exit by itself first.
+
+**Limits of these results:** one machine, one run of each case, equal capacities, short
+jobs. Not tested: unequal capacity, two real hosts, an organisation-level scale set, a
+host that dies while a job is running, long queues.
+
+### Program and how to run it
+
+**Spike program:** `spikes/s1-scaleset`. It uses the App credentials stored by S3, finds the App's installation,
 registers (or reuses) a scale set, long-polls for jobs, starts one throwaway Docker
 container per assigned job and deletes the scale set on exit.
 
